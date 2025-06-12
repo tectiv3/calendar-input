@@ -13,16 +13,16 @@ class CalendarInput extends Field
 {
     protected string $view = 'calendar-input::calendar-input';
 
-    protected CarbonInterface|string|Closure|null $maxDate = null;
+    protected CarbonInterface | string | Closure | null $maxDate = null;
 
-    protected CarbonInterface|string|Closure|null $minDate = null;
+    protected CarbonInterface | string | Closure | null $minDate = null;
 
     /**
      * @var array<DateTime | string> | Closure
      */
-    protected array|Closure $disabledDates = [];
+    protected array | Closure $disabledDates = [];
 
-    protected string|Closure|null $format = null;
+    protected string | Closure | null $format = null;
     // Métodos para agregar a tu clase de Calendar Field
 
     protected function setUp(): void
@@ -34,7 +34,7 @@ class CalendarInput extends Field
                 return;
             }
 
-            if (!$state instanceof CarbonInterface) {
+            if (! $state instanceof CarbonInterface) {
                 try {
                     $state = Carbon::createFromFormat($component->getFormat(), (string) $state, config('app.timezone'));
                 } catch (InvalidFormatException $exception) {
@@ -56,7 +56,7 @@ class CalendarInput extends Field
                 return null;
             }
 
-            if (!$state instanceof CarbonInterface) {
+            if (! $state instanceof CarbonInterface) {
                 $state = Carbon::parse($state);
             }
 
@@ -66,24 +66,24 @@ class CalendarInput extends Field
         $this->rule('date');
     }
 
-    public function maxDate(CarbonInterface|string|Closure|null $date): static
+    public function maxDate(CarbonInterface | string | Closure | null $date): static
     {
         $this->maxDate = $date;
 
         $this->rule(static function (CalendarInput $component) {
             return "before_or_equal:{$component->getMaxDate()}";
-        }, static fn(CalendarInput $component): bool => (bool) $component->getMaxDate());
+        }, static fn (CalendarInput $component): bool => (bool) $component->getMaxDate());
 
         return $this;
     }
 
-    public function minDate(CarbonInterface|string|Closure|null $date): static
+    public function minDate(CarbonInterface | string | Closure | null $date): static
     {
         $this->minDate = $date;
 
         $this->rule(static function (CalendarInput $component) {
             return "after_or_equal:{$component->getMinDate()}";
-        }, static fn(CalendarInput $component): bool => (bool) $component->getMinDate());
+        }, static fn (CalendarInput $component): bool => (bool) $component->getMinDate());
 
         return $this;
     }
@@ -91,14 +91,14 @@ class CalendarInput extends Field
     /**
      * @param  array<DateTime | string> | Closure  $dates
      */
-    public function disabledDates(array|Closure $dates): static
+    public function disabledDates(array | Closure $dates): static
     {
         $this->disabledDates = $dates;
 
         return $this;
     }
 
-    public function format(string|Closure|null $format): static
+    public function format(string | Closure | null $format): static
     {
         $this->format = $format;
 
@@ -183,7 +183,6 @@ class CalendarInput extends Field
             'disabledDates' => $this->getDisabledDates(),
         ];
     }
-
 
     public function getIsDisabled(): bool
     {
