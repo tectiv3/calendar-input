@@ -9,8 +9,9 @@ use DateTime;
 use Filament\Forms\Components\Field;
 use Illuminate\Support\Carbon;
 
-class CalendarInput extends Field {
-      protected string $view = 'calendar-input::calendar-input';
+class CalendarInput extends Field
+{
+    protected string $view = 'calendar-input::calendar-input';
 
     protected CarbonInterface | string | Closure | null $maxDate = null;
 
