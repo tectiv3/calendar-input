@@ -2,15 +2,16 @@
 
 namespace Alvleont\CalendarInput;
 
+use Carbon\CarbonInterface;
+use Carbon\Exceptions\InvalidFormatException;
 use Closure;
 use DateTime;
-use Carbon\CarbonInterface;
-use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Field;
-use Carbon\Exceptions\InvalidFormatException;
+use Illuminate\Support\Carbon;
 
-class CalendarInput extends Field {
-      protected string $view = 'filament.forms.components.calendar-picker';
+class CalendarInput extends Field
+{
+    protected string $view = 'filament.forms.components.calendar-picker';
 
     protected CarbonInterface | string | Closure | null $maxDate = null;
 
@@ -40,6 +41,7 @@ class CalendarInput extends Field {
                         $state = Carbon::parse($state, config('app.timezone'));
                     } catch (InvalidFormatException $exception) {
                         $component->state(null);
+
                         return;
                     }
                 }
