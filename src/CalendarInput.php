@@ -10,7 +10,7 @@ use Filament\Forms\Components\Field;
 use Carbon\Exceptions\InvalidFormatException;
 
 class CalendarInput extends Field {
-      protected string $view = 'filament.forms.components.calendar-picker';
+      protected string $view = 'calendar-input::calendar-input';
 
     protected CarbonInterface | string | Closure | null $maxDate = null;
 
