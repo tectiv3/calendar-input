@@ -1,11 +1,11 @@
-# A simple calendar input for FilamentPHP
+# CalendarInput
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/alvleont/calendar-input.svg?style=flat-square)](https://packagist.org/packages/alvleont/calendar-input)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/alvleont/calendar-input/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/alvleont/calendar-input/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/alvleont/calendar-input/fix-php-code-styling.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/alvleont/calendar-input/actions?query=workflow%3A)
 [![Total Downloads](https://img.shields.io/packagist/dt/alvleont/calendar-input.svg?style=flat-square)](https://packagist.org/packages/alvleont/calendar-input)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+A simple calendar input for FilamentPHP.
 
 ## Installation
 
