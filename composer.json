@@ -1,29 +1,28 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "alvleont/calendar-input",
+    "description": "A simple calendar input for FilamentPHP",
     "keywords": [
-        ":vendor_name",
+        "alvleont",
         "laravel",
-        ":package_slug"
+        "calendar-input"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/alvleont/calendar-input",
     "support": {
-        "issues": "https://github.com/:vendor_slug/:package_slug/issues",
-        "source": "https://github.com/:vendor_slug/:package_slug"
+        "issues": "https://github.com/alvleont/calendar-input/issues",
+        "source": "https://github.com/alvleont/calendar-input"
     },
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Alvaro León Torres",
+            "email": "alletor@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.1",
-        "filament/filament": "^3.0",
-        "filament/forms": "^3.0",
-        "filament/tables": "^3.0",
+        "filament/forms": "^3.0 || ^4.0",
+        "filament/support": "^3.0 || ^4.0",
         "spatie/laravel-package-tools": "^1.15.0"
     },
     "require-dev": {
@@ -41,13 +40,12 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Alvleont\\CalendarInput\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/"
+            "Alvleont\\CalendarInput\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -67,11 +65,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
-            ],
-            "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
-            }
+                "Alvleont\\CalendarInput\\CalendarInputServiceProvider"
+            ]
         }
     },
     "minimum-stability": "dev",
