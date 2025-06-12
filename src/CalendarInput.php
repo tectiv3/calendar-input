@@ -2,12 +2,12 @@
 
 namespace Alvleont\CalendarInput;
 
+use Carbon\CarbonInterface;
+use Carbon\Exceptions\InvalidFormatException;
 use Closure;
 use DateTime;
-use Carbon\CarbonInterface;
-use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Field;
-use Carbon\Exceptions\InvalidFormatException;
+use Illuminate\Support\Carbon;
 
 class CalendarInput extends Field {
       protected string $view = 'calendar-input::calendar-input';
@@ -40,6 +40,7 @@ class CalendarInput extends Field {
                         $state = Carbon::parse($state, config('app.timezone'));
                     } catch (InvalidFormatException $exception) {
                         $component->state(null);
+
                         return;
                     }
                 }
