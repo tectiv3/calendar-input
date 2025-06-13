@@ -9,22 +9,60 @@ use DateTime;
 use Filament\Forms\Components\Field;
 use Illuminate\Support\Carbon;
 
+/**
+ * Class CalendarInput
+ *
+ * A custom Filament form field component for selecting dates using a calendar input.
+ * Supports min/max date constraints, disabled dates, custom date formats, and localization.
+ *
+ * @package Alvleont\CalendarInput
+ *
+ * @property string $view The Blade view used to render the calendar input.
+ * @property CarbonInterface|string|Closure|null $maxDate The maximum selectable date.
+ * @property CarbonInterface|string|Closure|null $minDate The minimum selectable date.
+ * @property array<DateTime|string>|Closure $disabledDates The dates that should be disabled in the calendar.
+ * @property string|Closure|null $format The date format used for parsing and displaying dates.
+ * @property string|Closure|null $calendarLocale The locale used for calendar display.
+ */
 class CalendarInput extends Field
 {
+    /**
+     * @var string The Blade view used to render the calendar input.
+     */
     protected string $view = 'calendar-input::calendar-input';
 
+    /**
+     * @var CarbonInterface|string|Closure|null The maximum selectable date.
+     */
     protected CarbonInterface | string | Closure | null $maxDate = null;
 
+    /**
+     * @var CarbonInterface|string|Closure|null The minimum selectable date.
+     */
     protected CarbonInterface | string | Closure | null $minDate = null;
 
     /**
-     * @var array<DateTime | string> | Closure
+     * @var array<DateTime | string> | Closure The dates that should be disabled in the calendar.
      */
     protected array | Closure $disabledDates = [];
 
+    /**
+     * @var string|Closure|null The date format used for parsing and displaying dates.
+     */
     protected string | Closure | null $format = null;
-    // Métodos para agregar a tu clase de Calendar Field
 
+    /**
+     * @var string|Closure|null The locale used for calendar display.
+     */
+    protected string | Closure | null $calendarLocale = null;
+
+    /**
+     * Set up the CalendarInput component.
+     *
+     * Hydrates and dehydrates the state, applies validation rules, and sets up date parsing logic.
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -66,6 +104,12 @@ class CalendarInput extends Field
         $this->rule('date');
     }
 
+    /**
+     * Set the maximum selectable date.
+     *
+     * @param CarbonInterface|string|Closure|null $date
+     * @return static
+     */
     public function maxDate(CarbonInterface | string | Closure | null $date): static
     {
         $this->maxDate = $date;
@@ -77,6 +121,12 @@ class CalendarInput extends Field
         return $this;
     }
 
+    /**
+     * Set the minimum selectable date.
+     *
+     * @param CarbonInterface|string|Closure|null $date
+     * @return static
+     */
     public function minDate(CarbonInterface | string | Closure | null $date): static
     {
         $this->minDate = $date;
@@ -89,7 +139,10 @@ class CalendarInput extends Field
     }
 
     /**
+     * Set the dates that should be disabled in the calendar.
+     *
      * @param  array<DateTime | string> | Closure  $dates
+     * @return static
      */
     public function disabledDates(array | Closure $dates): static
     {
@@ -98,6 +151,12 @@ class CalendarInput extends Field
         return $this;
     }
 
+    /**
+     * Set the date format for the calendar input.
+     *
+     * @param string|Closure|null $format
+     * @return static
+     */
     public function format(string | Closure | null $format): static
     {
         $this->format = $format;
@@ -105,11 +164,33 @@ class CalendarInput extends Field
         return $this;
     }
 
+    /**
+     * Set the locale for calendar display.
+     *
+     * @param string|Closure|null $locale
+     * @return static
+     */
+    public function calendarLocale(string | Closure | null $locale): static
+    {
+        $this->calendarLocale = $locale;
+        return $this;
+    }
+
+    /**
+     * Get the date format for the calendar input.
+     *
+     * @return string
+     */
     public function getFormat(): string
     {
         return $this->evaluate($this->format) ?? 'Y-m-d';
     }
 
+    /**
+     * Get the maximum selectable date as a string.
+     *
+     * @return string|null
+     */
     public function getMaxDate(): ?string
     {
         $maxDate = $this->evaluate($this->maxDate);
@@ -129,6 +210,11 @@ class CalendarInput extends Field
         return $maxDate;
     }
 
+    /**
+     * Get the minimum selectable date as a string.
+     *
+     * @return string|null
+     */
     public function getMinDate(): ?string
     {
         $minDate = $this->evaluate($this->minDate);
@@ -149,6 +235,8 @@ class CalendarInput extends Field
     }
 
     /**
+     * Get the disabled dates as an array of strings.
+     *
      * @return array<string>
      */
     public function getDisabledDates(): array
@@ -173,7 +261,13 @@ class CalendarInput extends Field
     }
 
     /**
-     * Get data to pass to the frontend component
+     * Get the calendar data to pass to the frontend component.
+     *
+     * @return array{
+     *     maxDate: string|null,
+     *     minDate: string|null,
+     *     disabledDates: array<string>
+     * }
      */
     public function getCalendarData(): array
     {
@@ -184,50 +278,105 @@ class CalendarInput extends Field
         ];
     }
 
+    /**
+     * Determine if the calendar input is disabled.
+     *
+     * @return bool
+     */
     public function getIsDisabled(): bool
     {
         return $this->evaluate($this->isDisabled) || $this->getContainer()->isDisabled();
     }
 
+    /**
+     * Get the days of the week for the calendar, localized.
+     *
+     * @return array<string>
+     */
     public function getDaysOfWeek(): array
     {
-        $locale = app()->getLocale();
+        $locale = $this->getCalendarLocale();
         $daysOfWeek = [];
-
-        // Obtener los días de la semana empezando por domingo (0) hasta sábado (6)
-        // Carbon maneja automáticamente la localización
         for ($i = 0; $i < 7; $i++) {
-            $date = Carbon::now()->startOfWeek(Carbon::SUNDAY)->addDays($i);
-            $daysOfWeek[] = $date->locale($locale)->format('D');
+            $date = Carbon::now()->startOfWeek(\Carbon\Carbon::SUNDAY)->addDays($i);
+            $daysOfWeek[] = $date->locale($locale)->translatedFormat('D');
         }
 
         return $daysOfWeek;
     }
 
+    /**
+     * Get the months of the year for the calendar, localized.
+     *
+     * @return array<string>
+     */
+    public function getMonthsOfYear(): array
+    {
+        $locale = $this->getCalendarLocale();
+        $monthsOfYear = [];
+
+        for ($i = 0; $i < 12; $i++) {
+            $date = Carbon::createFromDate(null, $i + 1, 1);
+            $monthsOfYear[] = ucfirst($date->locale($locale)->translatedFormat('F'));
+        }
+
+        return $monthsOfYear;
+    }
+
+    /**
+     * Get the current month and year as a formatted string, localized.
+     *
+     * @return string
+     */
     public function getCurrentMonthYear(): string
     {
-        $locale = app()->getLocale();
+        $locale = $this->getCalendarLocale();
 
-        // Si hay una fecha seleccionada, usar esa fecha para el mes/año
+        // If there's a selected date, use that date for the month/year
         $date = $this->getState() ? Carbon::parse($this->getState()) : now();
 
         return $date->locale($locale)->translatedFormat('F Y');
     }
 
-    // Método alternativo si quieres días más cortos (1-2 letras)
+    /**
+     * Get the short names of the days of the week for the calendar, localized.
+     *
+     * @return array<string>
+     */
     public function getDaysOfWeekShort(): array
     {
-        $locale = app()->getLocale();
+        $locale = $this->getCalendarLocale();
         $daysOfWeek = [];
 
         for ($i = 0; $i < 7; $i++) {
             $date = Carbon::now()->startOfWeek(Carbon::SUNDAY)->addDays($i);
-            // Usa 'D' para 3 letras (Lun), o crea tu propio formato
+            // Use 'D' for 3 letters (Mon), or create your own format
             $dayName = $date->locale($locale)->format('D');
-            // Si quieres solo 2 letras: substr($dayName, 0, 2)
+            // If you want only 2 letters: substr($dayName, 0, 2)
             $daysOfWeek[] = $dayName;
         }
 
         return $daysOfWeek;
+    }
+
+    /**
+     * Get the locale used for calendar display.
+     * Falls back to app locale if no calendar locale is set.
+     *
+     * @return string
+     */
+    protected function getCalendarLocale(): string
+    {
+        return $this->evaluate($this->calendarLocale) ?? app()->getLocale();
+    }
+
+    /**
+     * Get the calendar locale for use on the frontend.
+     *
+     * @return string
+     */
+    public function getCalendarLocaleForFrontend(): string
+    {
+        return $this->getCalendarLocale();
     }
 }
