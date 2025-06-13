@@ -15,7 +15,6 @@ use Illuminate\Support\Carbon;
  * A custom Filament form field component for selecting dates using a calendar input.
  * Supports min/max date constraints, disabled dates, custom date formats, and localization.
  *
- * @package Alvleont\CalendarInput
  *
  * @property string $view The Blade view used to render the calendar input.
  * @property CarbonInterface|string|Closure|null $maxDate The maximum selectable date.
@@ -60,8 +59,6 @@ class CalendarInput extends Field
      * Set up the CalendarInput component.
      *
      * Hydrates and dehydrates the state, applies validation rules, and sets up date parsing logic.
-     *
-     * @return void
      */
     protected function setUp(): void
     {
@@ -106,9 +103,6 @@ class CalendarInput extends Field
 
     /**
      * Set the maximum selectable date.
-     *
-     * @param CarbonInterface|string|Closure|null $date
-     * @return static
      */
     public function maxDate(CarbonInterface | string | Closure | null $date): static
     {
@@ -123,9 +117,6 @@ class CalendarInput extends Field
 
     /**
      * Set the minimum selectable date.
-     *
-     * @param CarbonInterface|string|Closure|null $date
-     * @return static
      */
     public function minDate(CarbonInterface | string | Closure | null $date): static
     {
@@ -142,7 +133,6 @@ class CalendarInput extends Field
      * Set the dates that should be disabled in the calendar.
      *
      * @param  array<DateTime | string> | Closure  $dates
-     * @return static
      */
     public function disabledDates(array | Closure $dates): static
     {
@@ -153,9 +143,6 @@ class CalendarInput extends Field
 
     /**
      * Set the date format for the calendar input.
-     *
-     * @param string|Closure|null $format
-     * @return static
      */
     public function format(string | Closure | null $format): static
     {
@@ -166,20 +153,16 @@ class CalendarInput extends Field
 
     /**
      * Set the locale for calendar display.
-     *
-     * @param string|Closure|null $locale
-     * @return static
      */
     public function calendarLocale(string | Closure | null $locale): static
     {
         $this->calendarLocale = $locale;
+
         return $this;
     }
 
     /**
      * Get the date format for the calendar input.
-     *
-     * @return string
      */
     public function getFormat(): string
     {
@@ -188,8 +171,6 @@ class CalendarInput extends Field
 
     /**
      * Get the maximum selectable date as a string.
-     *
-     * @return string|null
      */
     public function getMaxDate(): ?string
     {
@@ -212,8 +193,6 @@ class CalendarInput extends Field
 
     /**
      * Get the minimum selectable date as a string.
-     *
-     * @return string|null
      */
     public function getMinDate(): ?string
     {
@@ -280,8 +259,6 @@ class CalendarInput extends Field
 
     /**
      * Determine if the calendar input is disabled.
-     *
-     * @return bool
      */
     public function getIsDisabled(): bool
     {
@@ -325,8 +302,6 @@ class CalendarInput extends Field
 
     /**
      * Get the current month and year as a formatted string, localized.
-     *
-     * @return string
      */
     public function getCurrentMonthYear(): string
     {
@@ -362,8 +337,6 @@ class CalendarInput extends Field
     /**
      * Get the locale used for calendar display.
      * Falls back to app locale if no calendar locale is set.
-     *
-     * @return string
      */
     protected function getCalendarLocale(): string
     {
@@ -372,8 +345,6 @@ class CalendarInput extends Field
 
     /**
      * Get the calendar locale for use on the frontend.
-     *
-     * @return string
      */
     public function getCalendarLocaleForFrontend(): string
     {
