@@ -7,6 +7,8 @@
 
 A simple calendar input for FilamentPHP.
 
+![Example](calendar-input_example.png)
+
 ## Installation
 
 You can install the package via composer:
