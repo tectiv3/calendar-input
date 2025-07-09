@@ -1,7 +1,7 @@
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div wire:ignore class="w-full">
         <div x-data="() => ({
-            state: null,
+            state: $wire.{{ $applyStateBindingModifiers("\$entangle('{$getStatePath()}')") }},
             internalState: null,
             currentDate: new Date(),
             selectedDate: null,
@@ -18,7 +18,6 @@
                 const year = date.getFullYear();
                 const month = date.getMonth();
                 return `${this.monthsOfYear[month]} ${year}`;
-
             },
 
             initializeFromState() {
@@ -253,11 +252,12 @@
                 return this.$t ? this.$t('datepicker.next_month') : 'Next month';
             }
 
-        })" x-init="state = $wire.entangle('{{ $getStatePath() }}', true);
-        $nextTick(() => {
+        })"
+        x-init="$nextTick(() => {
             initializeFromState();
             $watch('state', () => syncFromState());
-        });" {{ $getExtraAttributeBag() }}>
+        });"
+        {{ $getExtraAttributeBag() }}>
             <div class="relative bg-white border border-gray-200 rounded-lg shadow-sm isolate"
                 :class="{ 'opacity-75': isDisabled }">
                 <!-- Calendar container -->
