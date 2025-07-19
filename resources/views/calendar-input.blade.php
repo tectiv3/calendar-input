@@ -9,6 +9,7 @@
             maxDate: @js($getMaxDate()),
             minDate: @js($getMinDate()),
             disabledDates: @js($getDisabledDates()),
+            enabledDates: @js($getEnabledDates()),
             isDisabled: @js($getIsDisabled()),
             initialMonthYear: @js($getCurrentMonthYear()),
             monthsOfYear: @js($getMonthsOfYear()),
@@ -53,6 +54,11 @@
 
             isDateDisabled(date) {
                 const dateString = date.toISOString().split('T')[0];
+
+                // If enabled dates are specified, only allow those dates
+                if (this.enabledDates && this.enabledDates.length > 0) {
+                    return !this.enabledDates.includes(dateString);
+                }
 
                 // Check if date is in disabled dates array
                 if (this.disabledDates && this.disabledDates.includes(dateString)) {
