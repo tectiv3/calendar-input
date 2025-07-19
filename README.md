@@ -37,7 +37,8 @@ class ProductResource
                 ->name('Calendar')
 		->minDate('2025-06-01') //You can use the date you want, or null (optional method)
 		->maxDate('2029-09-30') //You can use the date you want, or null (optional method)
-		->disabledDates([]) //Optional Method
+		->disabledDates([]) //Optional Method - disables specific dates
+		->enabledDates(['2025-12-25', '2025-12-31']) //Optional Method - only enables specific dates (disables all others)
 		->disabled() //In case It'll be disabled or for the view page.
         ]);
     }

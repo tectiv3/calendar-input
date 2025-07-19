@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property CarbonInterface|string|Closure|null $maxDate The maximum selectable date.
  * @property CarbonInterface|string|Closure|null $minDate The minimum selectable date.
  * @property array<DateTime|string>|Closure $disabledDates The dates that should be disabled in the calendar.
+ * @property array<DateTime|string>|Closure $enabledDates The dates that should be enabled in the calendar (all other dates disabled).
  * @property string|Closure|null $format The date format used for parsing and displaying dates.
  * @property string|Closure|null $calendarLocale The locale used for calendar display.
  */
@@ -44,6 +45,11 @@ class CalendarInput extends Field
      * @var array<DateTime | string> | Closure The dates that should be disabled in the calendar.
      */
     protected array | Closure $disabledDates = [];
+
+    /**
+     * @var array<DateTime | string> | Closure The dates that should be enabled in the calendar (all other dates disabled).
+     */
+    protected array | Closure $enabledDates = [];
 
     /**
      * @var string|Closure|null The date format used for parsing and displaying dates.
@@ -137,6 +143,18 @@ class CalendarInput extends Field
     public function disabledDates(array | Closure $dates): static
     {
         $this->disabledDates = $dates;
+
+        return $this;
+    }
+
+    /**
+     * Set the dates that should be enabled in the calendar (all other dates disabled).
+     *
+     * @param  array<DateTime | string> | Closure  $dates
+     */
+    public function enabledDates(array | Closure $dates): static
+    {
+        $this->enabledDates = $dates;
 
         return $this;
     }
@@ -240,12 +258,39 @@ class CalendarInput extends Field
     }
 
     /**
+     * Get the enabled dates as an array of strings.
+     *
+     * @return array<string>
+     */
+    public function getEnabledDates(): array
+    {
+        $enabledDates = $this->evaluate($this->enabledDates);
+
+        return collect($enabledDates)->map(function ($date) {
+            if ($date instanceof CarbonInterface) {
+                return $date->toDateString();
+            }
+
+            if (is_string($date)) {
+                try {
+                    return Carbon::parse($date)->toDateString();
+                } catch (InvalidFormatException $exception) {
+                    return null;
+                }
+            }
+
+            return null;
+        })->filter()->values()->toArray();
+    }
+
+    /**
      * Get the calendar data to pass to the frontend component.
      *
      * @return array{
      *     maxDate: string|null,
      *     minDate: string|null,
-     *     disabledDates: array<string>
+     *     disabledDates: array<string>,
+     *     enabledDates: array<string>
      * }
      */
     public function getCalendarData(): array
@@ -254,6 +299,7 @@ class CalendarInput extends Field
             'maxDate' => $this->getMaxDate(),
             'minDate' => $this->getMinDate(),
             'disabledDates' => $this->getDisabledDates(),
+            'enabledDates' => $this->getEnabledDates(),
         ];
     }
 
