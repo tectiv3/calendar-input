@@ -33,17 +33,36 @@ class ProductResource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            // Single date selection (default)
             CalendarInput::make('date')
                 ->name('Calendar')
 		->minDate('2025-06-01') //You can use the date you want, or null (optional method)
 		->maxDate('2029-09-30') //You can use the date you want, or null (optional method)
 		->disabledDates([]) //Optional Method - disables specific dates
 		->enabledDates(['2025-12-25', '2025-12-31']) //Optional Method - only enables specific dates (disables all others)
-		->disabled() //In case It'll be disabled or for the view page.
+		->disabled(), //In case It'll be disabled or for the view page.
+		
+            // Range selection
+            CalendarInput::make('date_range')
+                ->name('Date Range')
+                ->rangeSelection() //Enable range selection mode
+                ->enabledDates(['2025-12-25', '2025-12-26', '2025-12-27', '2025-12-28']) //Only continuous ranges within these dates are allowed
+                ->minDate('2025-12-01')
+                ->maxDate('2025-12-31'),
         ]);
     }
 }
 ```
+
+### Range Selection Features
+
+- **Continuous Validation**: Ensures no disabled dates exist between start and end dates
+- **Enabled Dates Support**: When `enabledDates()` is used, ranges can only be selected within those dates
+- **Visual Feedback**: 
+  - Range start/end dates are highlighted in primary color
+  - Dates in range are highlighted with background color
+  - During selection, the start date shows a different color until range is completed
+- **State Format**: Range selection returns an array: `['2025-12-25', '2025-12-27']`
 
 ## Testing
 

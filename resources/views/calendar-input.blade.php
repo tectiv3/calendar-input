@@ -5,11 +5,15 @@
             internalState: null,
             currentDate: new Date(),
             selectedDate: null,
+            selectedStartDate: null,
+            selectedEndDate: null,
+            isSelectingRange: false,
             daysOfWeek: @js($getDaysOfWeek()),
             maxDate: @js($getMaxDate()),
             minDate: @js($getMinDate()),
             disabledDates: @js($getDisabledDates()),
             enabledDates: @js($getEnabledDates()),
+            rangeSelection: @js($isRangeSelection()),
             isDisabled: @js($getIsDisabled()),
             initialMonthYear: @js($getCurrentMonthYear()),
             monthsOfYear: @js($getMonthsOfYear()),
@@ -23,17 +27,37 @@
 
             initializeFromState() {
                 if (this.state) {
-                    const date = new Date(this.state);
-                    if (!isNaN(date.getTime())) {
-                        this.selectedDate = date;
-                        this.currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
-                        this.internalState = this.state;
+                    if (this.rangeSelection && Array.isArray(this.state) && this.state.length === 2) {
+                        // Handle range selection
+                        const startDate = new Date(this.state[0]);
+                        const endDate = new Date(this.state[1]);
+                        if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                            this.selectedStartDate = startDate;
+                            this.selectedEndDate = endDate;
+                            this.selectedDate = null;
+                            this.currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                            this.internalState = this.state;
+                            this.isSelectingRange = false;
+                        }
+                    } else if (!this.rangeSelection) {
+                        // Handle single date selection
+                        const date = new Date(this.state);
+                        if (!isNaN(date.getTime())) {
+                            this.selectedDate = date;
+                            this.selectedStartDate = null;
+                            this.selectedEndDate = null;
+                            this.currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                            this.internalState = this.state;
+                        }
                     }
                 } else {
                     this.selectedDate = null;
+                    this.selectedStartDate = null;
+                    this.selectedEndDate = null;
                     this.currentDate = new Date();
                     this.internalState = null;
                     this.state = null;
+                    this.isSelectingRange = false;
                 }
             },
 
@@ -41,13 +65,32 @@
                 if (this.state !== this.internalState) {
                     this.internalState = this.state;
                     if (this.state) {
-                        const date = new Date(this.state);
-                        if (!isNaN(date.getTime())) {
-                            this.selectedDate = date;
-                            this.currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                        if (this.rangeSelection && Array.isArray(this.state) && this.state.length === 2) {
+                            // Handle range selection
+                            const startDate = new Date(this.state[0]);
+                            const endDate = new Date(this.state[1]);
+                            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                                this.selectedStartDate = startDate;
+                                this.selectedEndDate = endDate;
+                                this.selectedDate = null;
+                                this.currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                                this.isSelectingRange = false;
+                            }
+                        } else if (!this.rangeSelection) {
+                            // Handle single date selection
+                            const date = new Date(this.state);
+                            if (!isNaN(date.getTime())) {
+                                this.selectedDate = date;
+                                this.selectedStartDate = null;
+                                this.selectedEndDate = null;
+                                this.currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                            }
                         }
                     } else {
                         this.selectedDate = null;
+                        this.selectedStartDate = null;
+                        this.selectedEndDate = null;
+                        this.isSelectingRange = false;
                     }
                 }
             },
@@ -78,6 +121,26 @@
                 return false;
             },
 
+            isValidDateRange(startDate, endDate) {
+                if (!startDate || !endDate) return false;
+                
+                // Ensure start is before or equal to end
+                if (startDate > endDate) return false;
+                
+                // Check each date in the range
+                const current = new Date(startDate);
+                const end = new Date(endDate);
+                
+                while (current <= end) {
+                    if (this.isDateDisabled(current)) {
+                        return false;
+                    }
+                    current.setDate(current.getDate() + 1);
+                }
+                
+                return true;
+            },
+
             canNavigateToPreviousMonth() {
                 if (this.isDisabled) return false;
                 if (!this.minDate) return true;
@@ -103,6 +166,23 @@
                 return dateObj.isCurrentMonth && !this.isDateDisabled(dateObj.date);
             },
 
+            isDateInRange(date) {
+                if (!this.selectedStartDate || !this.selectedEndDate) return false;
+                return date >= this.selectedStartDate && date <= this.selectedEndDate;
+            },
+
+            isRangeStart(date) {
+                return this.selectedStartDate && this.isSameDay(date, this.selectedStartDate);
+            },
+
+            isRangeEnd(date) {
+                return this.selectedEndDate && this.isSameDay(date, this.selectedEndDate);
+            },
+
+            isRangeSelecting(date) {
+                return this.isSelectingRange && this.selectedStartDate && this.isSameDay(date, this.selectedStartDate);
+            },
+
             get calendarWeeks() {
                 const year = this.currentDate.getFullYear();
                 const month = this.currentDate.getMonth();
@@ -124,9 +204,13 @@
                         day,
                         date,
                         isCurrentMonth: false,
-                        isSelected: this.isSameDay(date, this.selectedDate),
+                        isSelected: this.rangeSelection ? false : this.isSameDay(date, this.selectedDate),
                         isToday: this.isSameDay(date, new Date()),
                         isDisabled: this.isDateDisabled(date),
+                        isInRange: this.rangeSelection ? this.isDateInRange(date) : false,
+                        isRangeStart: this.rangeSelection ? this.isRangeStart(date) : false,
+                        isRangeEnd: this.rangeSelection ? this.isRangeEnd(date) : false,
+                        isRangeSelecting: this.rangeSelection ? this.isRangeSelecting(date) : false,
                         key: `prev-${day}`
                     });
                 }
@@ -139,9 +223,13 @@
                         day,
                         date,
                         isCurrentMonth: true,
-                        isSelected: this.isSameDay(date, this.selectedDate),
+                        isSelected: this.rangeSelection ? false : this.isSameDay(date, this.selectedDate),
                         isToday: this.isSameDay(date, new Date()),
                         isDisabled: isDisabled,
+                        isInRange: this.rangeSelection ? this.isDateInRange(date) : false,
+                        isRangeStart: this.rangeSelection ? this.isRangeStart(date) : false,
+                        isRangeEnd: this.rangeSelection ? this.isRangeEnd(date) : false,
+                        isRangeSelecting: this.rangeSelection ? this.isRangeSelecting(date) : false,
                         key: `current-${day}`
                     });
                 }
@@ -154,9 +242,13 @@
                         day,
                         date,
                         isCurrentMonth: false,
-                        isSelected: this.isSameDay(date, this.selectedDate),
+                        isSelected: this.rangeSelection ? false : this.isSameDay(date, this.selectedDate),
                         isToday: this.isSameDay(date, new Date()),
                         isDisabled: this.isDateDisabled(date),
+                        isInRange: this.rangeSelection ? this.isDateInRange(date) : false,
+                        isRangeStart: this.rangeSelection ? this.isRangeStart(date) : false,
+                        isRangeEnd: this.rangeSelection ? this.isRangeEnd(date) : false,
+                        isRangeSelecting: this.rangeSelection ? this.isRangeSelecting(date) : false,
                         key: `next-${day}`
                     });
                 }
@@ -186,16 +278,64 @@
 
             selectDate(dateObj) {
                 if (this.isDateSelectable(dateObj)) {
-                    // If already selected, deselect it
-                    if (this.isSameDay(dateObj.date, this.selectedDate)) {
-                        this.selectedDate = null;
-                        this.internalState = null;
-                        this.state = null;
+                    if (this.rangeSelection) {
+                        // Handle range selection
+                        if (!this.isSelectingRange && !this.selectedStartDate) {
+                            // Start new range selection
+                            this.selectedStartDate = new Date(dateObj.date);
+                            this.selectedEndDate = null;
+                            this.isSelectingRange = true;
+                            this.selectedDate = null;
+                            this.internalState = null;
+                            this.state = null;
+                        } else if (this.isSelectingRange) {
+                            // Complete range selection
+                            const startDate = this.selectedStartDate;
+                            const endDate = new Date(dateObj.date);
+                            
+                            // Ensure proper order
+                            const actualStart = startDate <= endDate ? startDate : endDate;
+                            const actualEnd = startDate <= endDate ? endDate : startDate;
+                            
+                            // Validate the range
+                            if (this.isValidDateRange(actualStart, actualEnd)) {
+                                this.selectedStartDate = actualStart;
+                                this.selectedEndDate = actualEnd;
+                                this.isSelectingRange = false;
+                                const startStr = actualStart.toISOString().split('T')[0];
+                                const endStr = actualEnd.toISOString().split('T')[0];
+                                this.internalState = [startStr, endStr];
+                                this.state = [startStr, endStr];
+                            } else {
+                                // Invalid range, restart selection
+                                this.selectedStartDate = new Date(dateObj.date);
+                                this.selectedEndDate = null;
+                                this.isSelectingRange = true;
+                                this.internalState = null;
+                                this.state = null;
+                            }
+                        } else {
+                            // Reset and start new range
+                            this.selectedStartDate = new Date(dateObj.date);
+                            this.selectedEndDate = null;
+                            this.isSelectingRange = true;
+                            this.selectedDate = null;
+                            this.internalState = null;
+                            this.state = null;
+                        }
                     } else {
-                        // Select the new date
-                        this.selectedDate = new Date(dateObj.date);
-                        this.internalState = this.selectedDate.toISOString().split('T')[0];
-                        this.state = this.internalState;
+                        // Handle single date selection
+                        if (this.isSameDay(dateObj.date, this.selectedDate)) {
+                            this.selectedDate = null;
+                            this.internalState = null;
+                            this.state = null;
+                        } else {
+                            this.selectedDate = new Date(dateObj.date);
+                            this.selectedStartDate = null;
+                            this.selectedEndDate = null;
+                            this.internalState = this.selectedDate.toISOString().split('T')[0];
+                            this.state = this.internalState;
+                        }
                     }
                 }
             },
@@ -313,22 +453,26 @@
                                 <template x-for="week in calendarWeeks" :key="week.key">
                                     <tr class="flex w-full not-first-of-type:mt-1">
                                         <template x-for="date in week.days" :key="date.key">
-                                            <td class="p-0 data-in-range:bg-zinc-100 dark:data-in-range:bg-white/10 first-of-type:rounded-s-lg last-of-type:rounded-e-lg"
+                                            <td class="p-0 first-of-type:rounded-s-lg last-of-type:rounded-e-lg"
                                                 :class="{
-                                                    'opacity-40': !date.isCurrentMonth || date.isDisabled
+                                                    'opacity-40': !date.isCurrentMonth || date.isDisabled,
+                                                    'bg-blue-50 dark:bg-blue-900/20': date.isInRange && !date.isRangeStart && !date.isRangeEnd,
+                                                    'bg-blue-100 dark:bg-blue-900/30': date.isRangeSelecting
                                                 }"
                                                 :data-selected="date.isSelected ? '' : null"
+                                                :data-range-start="date.isRangeStart ? '' : null"
+                                                :data-range-end="date.isRangeEnd ? '' : null"
+                                                :data-in-range="date.isInRange ? '' : null"
                                                 :data-today="date.isToday ? '' : null"
                                                 :data-disabled="date.isDisabled ? '' : null" role="gridcell"
-                                                :aria-selected="date.isSelected" :aria-disabled="date.isDisabled">
+                                                :aria-selected="date.isSelected || date.isRangeStart || date.isRangeEnd" :aria-disabled="date.isDisabled">
                                                 <button @click="selectDate(date)" type="button"
                                                     :disabled="!isDateSelectable(date)"
                                                     class="relative flex flex-col items-center justify-center text-sm font-medium transition-colors rounded-lg size-11 sm:size-11 text-zinc-800 dark:text-white disabled:text-zinc-400 disabled:pointer-events-none disabled:cursor-default"
                                                     :class="{
-                                                        'bg-primary-500 text-white hover:bg-primary-600': date
-                                                            .isSelected && !date.isDisabled,
-                                                        'hover:bg-zinc-800/5 dark:hover:bg-white/5': !date.isSelected &&
-                                                            !date.isDisabled && !isDisabled
+                                                        'bg-primary-500 text-white hover:bg-primary-600': (date.isSelected || date.isRangeStart || date.isRangeEnd) && !date.isDisabled,
+                                                        'bg-primary-300 text-white': date.isRangeSelecting && !date.isDisabled,
+                                                        'hover:bg-zinc-800/5 dark:hover:bg-white/5': !date.isSelected && !date.isRangeStart && !date.isRangeEnd && !date.isRangeSelecting && !date.isDisabled && !isDisabled
                                                     }"
                                                     :aria-label="formatDateLabel(date.date)"
                                                     :tabindex="isDateSelectable(date) ? 0 : -1">
