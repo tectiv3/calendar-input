@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property CarbonInterface|string|Closure|null $minDate The minimum selectable date.
  * @property array<DateTime|string>|Closure $disabledDates The dates that should be disabled in the calendar.
  * @property array<DateTime|string>|Closure $enabledDates The dates that should be enabled in the calendar (all other dates disabled).
+ * @property bool|Closure $rangeSelection Whether to enable range selection mode.
  * @property string|Closure|null $format The date format used for parsing and displaying dates.
  * @property string|Closure|null $calendarLocale The locale used for calendar display.
  */
@@ -52,6 +53,11 @@ class CalendarInput extends Field
     protected array | Closure $enabledDates = [];
 
     /**
+     * @var bool|Closure Whether to enable range selection mode.
+     */
+    protected bool | Closure $rangeSelection = false;
+
+    /**
      * @var string|Closure|null The date format used for parsing and displaying dates.
      */
     protected string | Closure | null $format = null;
@@ -75,6 +81,46 @@ class CalendarInput extends Field
                 return;
             }
 
+            // Handle range selection mode
+            if ($component->isRangeSelection()) {
+                if (is_array($state) && count($state) === 2) {
+                    $startDate = $state[0];
+                    $endDate = $state[1];
+
+                    try {
+                        if (! $startDate instanceof CarbonInterface) {
+                            $startDate = Carbon::parse($startDate, config('app.timezone'));
+                        }
+                        if (! $endDate instanceof CarbonInterface) {
+                            $endDate = Carbon::parse($endDate, config('app.timezone'));
+                        }
+
+                        $component->state([$startDate->toDateString(), $endDate->toDateString()]);
+                    } catch (InvalidFormatException $exception) {
+                        $component->state(null);
+                    }
+
+                    return;
+                } elseif (is_string($state) && str_contains($state, ',')) {
+                    $dates = explode(',', $state);
+                    if (count($dates) === 2) {
+                        try {
+                            $startDate = Carbon::parse(trim($dates[0]), config('app.timezone'));
+                            $endDate = Carbon::parse(trim($dates[1]), config('app.timezone'));
+                            $component->state([$startDate->toDateString(), $endDate->toDateString()]);
+                        } catch (InvalidFormatException $exception) {
+                            $component->state(null);
+                        }
+
+                        return;
+                    }
+                }
+                $component->state(null);
+
+                return;
+            }
+
+            // Handle single date selection mode
             if (! $state instanceof CarbonInterface) {
                 try {
                     $state = Carbon::createFromFormat($component->getFormat(), (string) $state, config('app.timezone'));
@@ -97,6 +143,23 @@ class CalendarInput extends Field
                 return null;
             }
 
+            // Handle range selection mode
+            if ($component->isRangeSelection()) {
+                if (is_array($state) && count($state) === 2) {
+                    try {
+                        $startDate = Carbon::parse($state[0]);
+                        $endDate = Carbon::parse($state[1]);
+
+                        return [$startDate->format($component->getFormat()), $endDate->format($component->getFormat())];
+                    } catch (InvalidFormatException $exception) {
+                        return null;
+                    }
+                }
+
+                return null;
+            }
+
+            // Handle single date selection mode
             if (! $state instanceof CarbonInterface) {
                 $state = Carbon::parse($state);
             }
@@ -104,7 +167,13 @@ class CalendarInput extends Field
             return $state->format($component->getFormat());
         });
 
-        $this->rule('date');
+        $this->rule(static function (CalendarInput $component): string {
+            if ($component->isRangeSelection()) {
+                return 'array|size:2';
+            }
+
+            return 'date';
+        });
     }
 
     /**
@@ -160,6 +229,16 @@ class CalendarInput extends Field
     }
 
     /**
+     * Enable range selection mode.
+     */
+    public function rangeSelection(bool | Closure $rangeSelection = true): static
+    {
+        $this->rangeSelection = $rangeSelection;
+
+        return $this;
+    }
+
+    /**
      * Set the date format for the calendar input.
      */
     public function format(string | Closure | null $format): static
@@ -185,6 +264,14 @@ class CalendarInput extends Field
     public function getFormat(): string
     {
         return $this->evaluate($this->format) ?? 'Y-m-d';
+    }
+
+    /**
+     * Check if range selection mode is enabled.
+     */
+    public function isRangeSelection(): bool
+    {
+        return $this->evaluate($this->rangeSelection) ?? false;
     }
 
     /**
@@ -284,13 +371,67 @@ class CalendarInput extends Field
     }
 
     /**
+     * Check if a date range is valid (continuous with no disabled dates).
+     */
+    public function isValidDateRange(string $startDate, string $endDate): bool
+    {
+        try {
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
+
+            // Ensure start date is before or equal to end date
+            if ($start->gt($end)) {
+                return false;
+            }
+
+            $enabledDates = $this->getEnabledDates();
+            $disabledDates = $this->getDisabledDates();
+            $minDate = $this->getMinDate();
+            $maxDate = $this->getMaxDate();
+
+            // Check each date in the range
+            $current = $start->copy();
+            while ($current->lte($end)) {
+                $dateString = $current->toDateString();
+
+                // Check min/max date constraints
+                if ($minDate && $dateString < $minDate) {
+                    return false;
+                }
+                if ($maxDate && $dateString > $maxDate) {
+                    return false;
+                }
+
+                // Check enabled dates (if specified, only these dates are allowed)
+                if (! empty($enabledDates)) {
+                    if (! in_array($dateString, $enabledDates)) {
+                        return false;
+                    }
+                } else {
+                    // Check disabled dates
+                    if (in_array($dateString, $disabledDates)) {
+                        return false;
+                    }
+                }
+
+                $current->addDay();
+            }
+
+            return true;
+        } catch (InvalidFormatException $exception) {
+            return false;
+        }
+    }
+
+    /**
      * Get the calendar data to pass to the frontend component.
      *
      * @return array{
      *     maxDate: string|null,
      *     minDate: string|null,
      *     disabledDates: array<string>,
-     *     enabledDates: array<string>
+     *     enabledDates: array<string>,
+     *     rangeSelection: bool
      * }
      */
     public function getCalendarData(): array
@@ -300,6 +441,7 @@ class CalendarInput extends Field
             'minDate' => $this->getMinDate(),
             'disabledDates' => $this->getDisabledDates(),
             'enabledDates' => $this->getEnabledDates(),
+            'rangeSelection' => $this->isRangeSelection(),
         ];
     }
 
